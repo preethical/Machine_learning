@@ -1,0 +1,86 @@
+---
+title: "Machine Learning Assignment"
+author: "preethi"
+date: "11/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Description of the dataset
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
+In this project, our goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the [website](http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har). 
+
+The goal of this project is to determine the manner in which they did the exercise. This is the "Classe" Variable in the training set. 
+
+What is the classe variable
+
+Class A - exactly according to the specification
+Class B - throwing the elbows to the front
+Class C - lifting the dumbbell only halfway
+Class D - lowering the dumbbell only halfway
+Class E - throwing the hips to the front
+
+We have already been given a training and test set.
+First we lad the required the packages and the set the seed for uniformity
+
+```{r library, results='hide'}
+library(caret)
+library(dplyr)
+set.seed(2)
+```
+
+Then we download the training and test file and read them appropriately (specifically the na's)
+
+```{r load}
+if (!file.exists("pml-training.csv")){    download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",destfile = "./pml-training.csv", quiet = TRUE)}
+
+if (!file.exists("pml-testing.csv")){
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",destfile = "./pml-testing.csv", quiet = TRUE)}
+
+training_data <- read.csv("pml-training.csv", header = TRUE, na.strings = c("NA","#DIV/0!",""))
+test_data <- read.csv("pml-testing.csv", header = TRUE, na.strings = c("NA","#DIV/0!",""))
+
+```
+
+We now have our training data.Looking at it, there are some columns that wont be used toward the prediction. we can remove those in both training and testing data. There are also columns that have only na's. they can also be removed from the files.
+
+```{r clean}
+trains <- subset(training_data,select = -c(1:7))
+test <- subset(test_data,select = -c(1:7))
+
+trains <-trains %>% select_if(~!all(is.na(.)))
+test <- test %>% select_if(~!all(is.na(.)))
+
+```
+First let us partition the training data into a training and validation set
+
+```{r partition}
+##trainindex <- createDataPartition(trains$classe, p = 0.7, list = FALSE, times = 1)
+##pml_train <- trains[trainindex, ]
+##pml_validate <- trains[-trainindex, ]
+##pml_train<-pml_train %>% select_if(~!all(is.na(.)))
+```
+Now we can use a Random Forest plot on the training data using Classe as the outcome and everything else as the predictor.
+
+```{r caret}
+
+forest_model <- train(classe~., data = trains, method="rf", na.action = na.omit)
+
+forest_model
+
+forest_model$finalModel
+
+```
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
