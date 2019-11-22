@@ -27,7 +27,7 @@ Class E - throwing the hips to the front
 We have already been given a training and test set.
 First we lad the required the packages and the set the seed for uniformity
 
-```{r library, results='hide'}
+```{r library,results='hide', message=FALSE, warning=FALSE}
 library(caret)
 library(dplyr)
 library(tidyr)
@@ -56,7 +56,7 @@ dim(test_data)
 
 We now have our training data.Looking at it, there are some columns that wont be used toward the prediction. we can remove those in both training and testing data.
 
-```{r clean}
+```{r subset}
 
 trains <- subset(training_data,select = -c(1:7))
 
@@ -81,6 +81,7 @@ dim(pml_train)
 dim(pml_validate)
 ```
 
+
 First we clean the training data set of columns that have too many Na's and then check to see if there are columns with near 0 variances. 
 
 ```{r clean}
@@ -93,6 +94,8 @@ nzv <- nearZeroVar(training)
 
 nzv
 ```
+
+
 Since there are no near 0 variances after the dataset is cleared of na columns. 
 We can go ahead and clear the validation and test sets the same way. 
 
@@ -112,6 +115,7 @@ dim(test)
 
 ```
 
+
 First we fit a desicion tree model with rpart and plot it. 
 
 ```{r rpart}
@@ -124,6 +128,8 @@ confusionMatrix(prediction_desc,training$classe)
 rpart.plot(desc_tree)
 
 ```
+
+
 Now we can use a Random Forest plot on the training data using Classe as the outcome and everything else as the predictor.
 
 ```{r caret}
@@ -136,12 +142,12 @@ confusionMatrix(prediction, pml_validate$classe)
 
 ```
 
-Conclusion 
+## Conclusion 
 
 The decision tree model had an accuracy of 0.75 and the random forest an accuracy of 0.99. 
 We can also look at the predictors and there scores and the out of bag error rate  is about 0.007
 
-```{r pred }
+```{r pred}
 forest_model$importance
 
 forest_model$err.rate[500,1]
