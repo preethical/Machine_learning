@@ -44,26 +44,62 @@ download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.c
 training_data <- read.csv("pml-training.csv", header = TRUE, na.strings = c("NA","#DIV/0!",""))
 test_data <- read.csv("pml-testing.csv", header = TRUE, na.strings = c("NA","#DIV/0!",""))
 
+dim(training_data)
+
+dim(test_data)
+
 ```
 
 We now have our training data.Looking at it, there are some columns that wont be used toward the prediction. we can remove those in both training and testing data. There are also columns that have only na's. they can also be removed from the files.
 
 ```{r clean}
+
 trains <- subset(training_data,select = -c(1:7))
+
 test <- subset(test_data,select = -c(1:7))
 
-trains <-trains %>% select_if(~!all(is.na(.)))
-test <- test %>% select_if(~!all(is.na(.)))
+dim(trains)
+
+dim(test)
+
+##test <- test %>% select_if(~!all(is.na(.)))
 
 ```
-First let us partition the training data into a training and validation set
 
 ```{r partition}
-##trainindex <- createDataPartition(trains$classe, p = 0.7, list = FALSE, times = 1)
-##pml_train <- trains[trainindex, ]
-##pml_validate <- trains[-trainindex, ]
-##pml_train<-pml_train %>% select_if(~!all(is.na(.)))
+
+trainindex <- createDataPartition (trains$classe, p = 0.6, list = FALSE)
+
+pml_train <- trains[trainindex,]
+pml_validate <- trains[-trainindex,]
+
+##dim(pml_train)
+##dim(pml_validate)
+
+training <-pml_train %>% select_if(~!all(is.na(.)))
+
+training1 <- training[-nearZeroVar(training)]
+
+dim(training1)
+
+Cleannames <- colnames(training1)
+
+Cleannames2 <- colnames(training1[,-124])
+
+pml_validate <- pml_validate[Cleannames]
+
+test <- test[Cleannames2]
+
+dim(pml_validate)
+
+dim(test)
+
 ```
+
+
+First let us partition the training data into a training and validation set
+
+
 Now we can use a Random Forest plot on the training data using Classe as the outcome and everything else as the predictor.
 
 ```{r caret}
