@@ -31,6 +31,9 @@ First we lad the required the packages and the set the seed for uniformity
 library(caret)
 library(dplyr)
 library(tidyr)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
 set.seed(2)
 ```
 
@@ -51,7 +54,7 @@ dim(test_data)
 
 ```
 
-We now have our training data.Looking at it, there are some columns that wont be used toward the prediction. we can remove those in both training and testing data. There are also columns that have only na's. they can also be removed from the files.
+We now have our training data.Looking at it, there are some columns that wont be used toward the prediction. we can remove those in both training and testing data.
 
 ```{r clean}
 
@@ -63,9 +66,9 @@ dim(trains)
 
 dim(test)
 
-##test <- test %>% select_if(~!all(is.na(.)))
-
 ```
+
+The training data is then partitioned furrther into a validation and training set.  
 
 ```{r partition}
 
@@ -78,6 +81,8 @@ dim(pml_train)
 dim(pml_validate)
 ```
 
+First we clean the training data set of columns that have too many Na's and then check to see if there are columns with near 0 variances. 
+
 ```{r clean}
 training <- pml_train %>% 
   purrr::discard(~sum(is.na(.x))/length(.x)* 100 >= 90)
@@ -89,10 +94,13 @@ nzv <- nearZeroVar(training)
 nzv
 ```
 Since there are no near 0 variances after the dataset is cleared of na columns. 
-We can go ahead and clear the 
-Cleannames <- colnames(training1)
+We can go ahead and clear the validation and test sets the same way. 
 
-Cleannames2 <- colnames(training1[,-124])
+```{r clean2}
+
+Cleannames <- colnames(training)
+Cleannames2 <- colnames(training[,-53])
+
 
 pml_validate <- pml_validate[Cleannames]
 
@@ -104,27 +112,39 @@ dim(test)
 
 ```
 
+First we fit a desicion tree model with rpart and plot it. 
 
-First let us partition the training data into a training and validation set
+```{r rpart}
+desc_tree <- rpart(classe~., data = training, method = "class")
 
+prediction_desc <- predict(desc_tree, data = training, type = "class")
 
+confusionMatrix(prediction_desc,training$classe)
+
+rpart.plot(desc_tree)
+
+```
 Now we can use a Random Forest plot on the training data using Classe as the outcome and everything else as the predictor.
 
 ```{r caret}
 
-forest_model <- train(classe~., data = training1, method="rf", na.action = na.omit)
-
-forest_model
-
-forest_model$finalModel
+forest_model <- randomForest(classe~.,data = training, na.action=na.omit, method = "class")
+##predicting on the validation data set
+prediction <- predict(forest_model,pml_validate, type = "class")
+##confusion matrix with the same.
+confusionMatrix(prediction, pml_validate$classe)
 
 ```
-## Including Plots
 
-You can also embed plots, for example:
+Conclusion 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+The decision tree model had an accuracy of 0.75 and the random forest an accuracy of 0.99. 
+We can also look at the predictors and there scores and the out of bag error rate  is about 0.007
+
+```{r pred }
+forest_model$importance
+
+forest_model$err.rate[500,1]
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
