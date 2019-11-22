@@ -30,6 +30,7 @@ First we lad the required the packages and the set the seed for uniformity
 ```{r library, results='hide'}
 library(caret)
 library(dplyr)
+library(tidyr)
 set.seed(2)
 ```
 
@@ -73,15 +74,22 @@ trainindex <- createDataPartition (trains$classe, p = 0.6, list = FALSE)
 pml_train <- trains[trainindex,]
 pml_validate <- trains[-trainindex,]
 
-##dim(pml_train)
-##dim(pml_validate)
+dim(pml_train)
+dim(pml_validate)
+```
 
-training <-pml_train %>% select_if(~!all(is.na(.)))
+```{r clean}
+training <- pml_train %>% 
+  purrr::discard(~sum(is.na(.x))/length(.x)* 100 >= 90)
 
-training1 <- training[-nearZeroVar(training)]
+dim(training)
 
-dim(training1)
+nzv <- nearZeroVar(training)
 
+nzv
+```
+Since there are no near 0 variances after the dataset is cleared of na columns. 
+We can go ahead and clear the 
 Cleannames <- colnames(training1)
 
 Cleannames2 <- colnames(training1[,-124])
@@ -104,7 +112,7 @@ Now we can use a Random Forest plot on the training data using Classe as the out
 
 ```{r caret}
 
-forest_model <- train(classe~., data = trains, method="rf", na.action = na.omit)
+forest_model <- train(classe~., data = training1, method="rf", na.action = na.omit)
 
 forest_model
 
